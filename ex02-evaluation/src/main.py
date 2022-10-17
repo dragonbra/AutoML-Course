@@ -50,9 +50,21 @@ def McNemar_test(labels, prediction_1, prediction_2):
     :param prediction_2:  the prediction results from model 2
     :return: the test statistic chi2_Mc
     """
-    chi2_Mc = np.random.uniform(0, 1)
+    # chi2_Mc = np.random.uniform(0, 1)
+    A, B, C, D = 0, 0, 0, 0
+    for truth, model1, model2 in zip(labels, prediction_1, prediction_2):
+        if model1 == truth and model2 == truth:
+            A += 1
+        elif model1 == truth:
+            B += 1
+        elif model2 == truth:
+            C += 1
+        else:
+            D += 1
+    chi2_Mc = (abs(B-C) - 1) ** 2 / (B + C)
     return chi2_Mc
 
+import math
 
 def TwoMatchedSamplest_test(y1, y2):
     """
@@ -61,7 +73,11 @@ def TwoMatchedSamplest_test(y1, y2):
     :param y2: runs of algorithm 2
     :return: the test statistic t-value
     """
-    t_value = np.random.uniform(0, 1)
+    # t_value = np.random.uniform(0, 1)
+    d = y1 - y2
+    dhat = sum(d) / len(d)
+    sigma = math.sqrt(1 / (len(y1) - 1) * sum([(di - dhat) ** 2 for di in d]))
+    t_value = math.sqrt(len(y1)) * dhat / sigma
     return t_value
 
 
@@ -75,6 +91,31 @@ def Friedman_test(errors):
     """
     chi2_F = np.random.uniform(0, 1)
     FData_stats = {'errors': errors}
+
+    n, k = len(errors), len(errors[0])
+    # print(n, k)
+    R = np.argsort(np.argsort(errors))
+    Rhat = sum(sum(R)) / (n * k)
+    
+    SStotal = 0
+    Rdot_list = []
+    for j in range(k):
+        Rdot = 0
+        for i in range(n):
+            Rdot += R[i][j] / n
+        Rdot_list.append(Rdot)
+        SStotal += n * ((Rdot - Rhat) ** 2)
+    
+    SSerror = 0
+    for i in range(n):
+        for j in range(k):
+            SSerror += (R[i][j] - Rhat) ** 2 / (n * (k - 1))
+    
+    # print(SStotal, SSerror)
+    chi2_F = SStotal / SSerror
+
+    FData_stats['Rank_dot'] = Rdot_list
+
     return chi2_F, FData_stats
 
 
@@ -85,6 +126,21 @@ def Nemenyi_test(FData_stats):
     :return: the test statisic Q value
     """
     Q_value = np.empty_like([1])
+    errors = FData_stats['errors']
+    Rdot_list = FData_stats['Rank_dot']
+
+    n, k = len(errors), len(errors[0])
+    Q_value = []
+    for j1 in range(k):
+        Q_j1 = []
+        for j2 in range(k):
+            if j2 <= j1:
+                Q_j1.append(0)
+                continue
+            Q_j1.append((Rdot_list[j1] - Rdot_list[j2]) / math.sqrt(k * (k + 1) / (6 * n)))
+        # print(Q_j1)
+        Q_value.append(Q_j1)
+
     return Q_value
 
 
@@ -93,6 +149,29 @@ def box_plot(FData_stats):
     TODO
     :param FData_stats: the statistical data of the Friedan test data to be utilized in the post hoc problems
     """
+    print(FData_stats)
+    """
+    TODO
+    refer to: https://blog.csdn.net/hustqb/article/details/77717026
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    np.random.seed(19680801)
+    all_data = [np.random.normal(0, std, size=100) for std in range(1, 4)]
+    labels = ['x1', 'x2', 'x3']
+
+    bplot = plt.boxplot(all_data, patch_artist=True, labels=labels)  # 设置箱型图可填充
+    plt.title('Rectangular box plot')
+
+    colors = ['pink', 'lightblue', 'lightgreen']
+    for patch, color in zip(bplot['boxes'], colors):
+        patch.set_facecolor(color)  # 为不同的箱型图填充不同的颜色
+
+    # plt.yaxis.grid(True)
+    plt.xlabel('Three separate samples')
+    plt.ylabel('Observed values')
+    plt.savefig('image.jpg')
     pass
 
 
