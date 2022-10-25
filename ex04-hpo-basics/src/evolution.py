@@ -82,11 +82,21 @@ class Member:
         # TODO modify new_x either through uniform or gaussian mutation
         if self._mutation == Mutation.UNIFORM:
             # TODO
-            raise NotImplementedError
+            # raise NotImplementedError
+            import random
+            pos = random.randint(0, len(new_x) - 1)
+            new_x[pos] = random.uniform(self.__bounds[0], self.__bounds[1])
         elif self._mutation == Mutation.GAUSSIAN:
             assert self._sigma, 'Sigma has to be set when gaussian mutation is used'
             # TODO
-            raise NotImplementedError
+            # raise NotImplementedError
+            import random
+            for i in range(len(new_x)):
+                new_x[i] = new_x[i] + random.choice([1, -1]) * self._sigma * random.gauss(0, 1)
+                if new_x[i] < self.__bounds[0]:
+                    new_x[i] = self.__bounds[0]
+                elif new_x[i] > self.__bounds[1]:
+                    new_x[i] = self.__bounds[1]
         elif self._mutation != Mutation.NONE:
             # We won't consider any other mutation types
             raise NotImplementedError
@@ -105,12 +115,23 @@ class Member:
         """
         if self._recombination == Recombination.INTERMEDIATE:
             # TODO
-            raise NotImplementedError
+            # raise NotImplementedError
+            import random
+            new_x = self.x_coordinate.copy()
+            partner_x = partner.x_coordinate.copy()
+            for i in range(len(new_x)):
+                new_x[i] = 1/2 * (new_x[i] + partner_x[i])
         elif self._recombination == Recombination.UNIFORM:
             assert self._recom_prob is not None, \
                 'for this recombination type you have to specify the recombination probability'
             # TODO
-            raise NotImplementedError
+            # raise NotImplementedError
+            import random
+            new_x = self.x_coordinate.copy()
+            partner_x = partner.x_coordinate.copy()
+            for i in range(len(new_x)):
+                if random.uniform(0, 1) > self._recom_prob:
+                    new_x[i] = partner_x[i]
         elif self._recombination == Recombination.NONE:
             new_x = self.x_coordinate.copy()  # copy is important here to not only get a reference
         else:
@@ -192,13 +213,22 @@ class EA:
         parent_ids = []
         if self.selection == ParentSelection.NEUTRAL:
             # TODO
-            raise NotImplementedError
+            # raise NotImplementedError
+            import random
+            pos = random.choice([i for i in range(self.pop_size)])
+            parent_ids = [_ for _ in range(0, pos + 1)]
         elif self.selection == ParentSelection.FITNESS:
             # TODO
-            raise NotImplementedError
+            # raise NotImplementedError
+            import random
+            for i in range(self.pop_size):
+                if random.random() < 1/2:
+                    parent_ids = [_ for _ in range(0, i)]
+                    break
         elif self.selection == ParentSelection.TOURNAMENT:
             # TODO
-            raise NotImplementedError
+            # raise NotImplementedError
+            parent_ids.append(0)
         else:
             raise NotImplementedError
         self.logger.debug('Selected parents:')
@@ -218,7 +248,14 @@ class EA:
         for id in parent_ids:
             # TODO for each parent create exactly one offspring (use the frac_mutants) parameter to determine
             # if more recombination or mutation should be performed
-            raise NotImplementedError
+            # raise NotImplementedError
+            import random
+            parent = self.population[id]
+            if random.random() < self.frac_mutants:
+                child = parent.mutate()
+            else:
+                child = parent.recombine(random.choice(self.population))
+            children.append(child)
             self._func_evals += 1
         self.logger.debug('Children:')
         self.logger.debug(children)

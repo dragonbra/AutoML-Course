@@ -1,3 +1,4 @@
+from itertools import combinations
 import numpy as np
 import logging
 from src.evolution import Mutation, ParentSelection, Recombination, EA
@@ -31,5 +32,13 @@ def determine_best_hypers():
     :return: best configuration as tuple e.g. (mutation, selection, recombination) and performance value
     """
     # TODO
-    raise NotImplementedError
+    # raise NotImplementedError
+    best_setting, best_perf = (Mutation.NONE, ParentSelection.NEUTRAL, Recombination.NONE), float('inf')
+    for mutation in Mutation:
+        for selection in ParentSelection:
+            for recombination in Recombination:
+                fitness_val = evaluate_black_box(mutation, selection, recombination)
+                if fitness_val < best_perf:
+                    best_setting, best_perf = (mutation, selection, recombination), fitness_val
+    # print(best_setting, best_perf)
     return best_setting, best_perf
